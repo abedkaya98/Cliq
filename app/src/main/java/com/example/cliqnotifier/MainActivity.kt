@@ -12,6 +12,7 @@ import com.example.cliqnotifier.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var prefs: AppPreferences
     private val SMS_PERMISSION_CODE = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,14 +21,45 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnTest.text = "منح إذن قراءة الرسائل"
+        prefs = AppPreferences(this)
 
+        // تحميل الإعدادات المحفوظة وتعبئتها بالحقول
+        loadSettings()
+
+        // زر حفظ الإعدادات
+        binding.btnSaveSettings.setOnClickListener {
+            saveSettings()
+        }
+
+        // زر منح الإذن
         binding.btnTest.setOnClickListener {
             checkAndRequestSmsPermission()
         }
 
-        // فحص تلقائي عند فتح التطبيق
         checkAndRequestSmsPermission()
+    }
+
+    private fun loadSettings() {
+        binding.etWebhookUrl.setText(prefs.webhookUrl)
+        binding.etSecretToken.setText(prefs.secretToken)
+        binding.etWalletName.setText(prefs.walletName)
+    }
+
+    private fun saveSettings() {
+        val url = binding.etWebhookUrl.text.toString().trim()
+        val token = binding.etSecretToken.text.toString().trim()
+        val wallet = binding.etWalletName.text.toString().trim()
+
+        if (url.isEmpty()) {
+            Toast.makeText(this, "يرجى إدخال رابط الـ Webhook", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        prefs.webhookUrl = url
+        prefs.secretToken = token
+        prefs.walletName = wallet
+
+        Toast.makeText(this, "تم حفظ الإعدادات بنجاح!", Toast.LENGTH_SHORT).show()
     }
 
     private fun checkAndRequestSmsPermission() {
@@ -40,19 +72,6 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS),
                 SMS_PERMISSION_CODE
             )
-        } else {
-            Toast.makeText(this, "إذن الرسائل مفعّل والتطبيق جاهز!", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == SMS_PERMISSION_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "تم منح الإذن بنجاح!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "تم رفض الإذن، لن يتمكن التطبيق من قراءة إشعارات CliQ", Toast.LENGTH_LONG).show()
-            }
         }
     }
 }
