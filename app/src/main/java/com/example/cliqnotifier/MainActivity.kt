@@ -23,15 +23,12 @@ class MainActivity : AppCompatActivity() {
 
         prefs = AppPreferences(this)
 
-        // تحميل الإعدادات المحفوظة وتعبئتها بالحقول
         loadSettings()
 
-        // زر حفظ الإعدادات
         binding.btnSaveSettings.setOnClickListener {
             saveSettings()
         }
 
-        // زر منح الإذن
         binding.btnTest.setOnClickListener {
             checkAndRequestSmsPermission()
         }
