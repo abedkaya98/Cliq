@@ -23,11 +23,11 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp" />
 
-        <!-- 1. القائمة المنسدلة لاختيار المرسل -->
+        <!-- 1. اختيار اسم المرسل -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="اختر مرسل الرسالة من الصندوق:"
+            android:text="1. اختر مرسل الرسالة (البنك):"
             android:textColor="#333333"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -38,54 +38,40 @@
             android:layout_height="48dp"
             android:layout_marginBottom="10dp" />
 
-        <!-- 2. الكلمة/الجملة المفتاحية للتحقق من الرسالة -->
+        <!-- 2. اختيار رسالة نموذجية -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="كلمة مفتاحية بالرسالة (مثل: CliQ):"
+            android:text="2. اختر رسالة نموذجية من هذا المرسل:"
             android:textColor="#333333"
-            android:textSize="12sp" />
-
-        <EditText
-            android:id="@+id/etRequiredKeyword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="مثال: CliQ أو تحويل"
-            android:textSize="13sp"
-            android:layout_marginBottom="10dp" />
-
-        <!-- 3. شروط استخراج المبلغ -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="2">
-
-            <EditText
-                android:id="@+id/etAmountPrefix"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="الكلمة قبل المبلغ (مبلغ)"
-                android:textSize="12sp" />
-
-            <EditText
-                android:id="@+id/etAmountSuffix"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="الكلمة بعد المبلغ (JOD)"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <!-- 4. شروط استخراج الاسم -->
-        <EditText
-            android:id="@+id/etSenderPrefix"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="الكلمة قبل اسم المحول (من/من العميل)"
             android:textSize="12sp"
-            android:layout_marginBottom="10dp" />
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spinnerSampleSms"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 3. زر اختبار وتحليل الرسالة -->
+        <Button
+            android:id="@+id/btnTestMatch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#3498DB"
+            android:text="اختبار وتحليل الرسالة المختارة"
+            android:textSize="13sp" />
+
+        <!-- مكان عرض نتيجة الاختيار -->
+        <TextView
+            android:id="@+id/tvTestResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:padding="8dp"
+            android:text="اختر رسالة واضغط على زر التحليل للاختبار..."
+            android:textColor="#666666"
+            android:textSize="12sp" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>
