@@ -15,7 +15,17 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // توحيد مفتاح التوقيع لنسخ Debug لضمان قبول التحديثات دائماً
+            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
