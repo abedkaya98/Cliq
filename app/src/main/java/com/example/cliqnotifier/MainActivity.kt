@@ -1,15 +1,18 @@
 package com.example.cliqnotifier
 
-import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.cliqnotifier.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private val SMS_PERMISSION_CODE = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -17,21 +20,39 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnTest.text = "تفعيل إذن الإشعارات"
+        binding.btnTest.text = "منح إذن قراءة الرسائل"
 
         binding.btnTest.setOnClickListener {
-            if (!isNotificationServiceEnabled()) {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                Toast.makeText(this, "يرجى تفعيل إذن CliQ Notifier", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(this, "الإذن مفعّل والخدمة تعمل بنجاح!", Toast.LENGTH_SHORT).show()
-            }
+            checkAndRequestSmsPermission()
+        }
+
+        // فحص تلقائي عند فتح التطبيق
+        checkAndRequestSmsPermission()
+    }
+
+    private fun checkAndRequestSmsPermission() {
+        val receiveSms = ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS)
+        val readSms = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
+
+        if (receiveSms != PackageManager.PERMISSION_GRANTED || readSms != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS),
+                SMS_PERMISSION_CODE
+            )
+        } else {
+            Toast.makeText(this, "إذن الرسائل مفعّل والتطبيق جاهز!", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun isNotificationServiceEnabled(): Boolean {
-        val pkgName = packageName
-        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
-        return flat != null && flat.contains(pkgName)
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == SMS_PERMISSION_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "تم منح الإذن بنجاح!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "تم رفض الإذن، لن يتمكن التطبيق من قراءة إشعارات CliQ", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }
