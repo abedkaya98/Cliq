@@ -5,9 +5,12 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -22,7 +25,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -30,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         loadSettings()
 
         binding.btnSaveSettings.setOnClickListener { saveSettings() }
-        
+
         binding.btnAddCard.setOnClickListener {
             addNewFilterCard()
         }
@@ -44,14 +47,43 @@ class MainActivity : AppCompatActivity() {
 
     private fun addNewFilterCard() {
         val cardView = LayoutInflater.from(this).inflate(R.layout.item_filter_card, binding.cardsContainerLayout, false)
-        
-        val spinner = cardView.findViewById<Spinner>(R.id.spinnerBank)
+
+        val spinnerBank = cardView.findViewById<Spinner>(R.id.spinnerBank)
+        val spinnerSampleSms = cardView.findViewById<Spinner>(R.id.spinnerSampleSms)
+        val btnTestMatch = cardView.findViewById<Button>(R.id.btnTestMatch)
+        val tvTestResult = cardView.findViewById<TextView>(R.id.tvTestResult)
         val btnDelete = cardView.findViewById<Button>(R.id.btnDeleteCard)
 
-        // جلب أسماء المرسلين الحقيقيين من صندوق الرسائل بالهاتف
+        // تعبئة المرسلين
         val sendersList = getSmsSenders()
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sendersList)
-        spinner.adapter = adapter
+        val bankAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sendersList)
+        spinnerBank.adapter = bankAdapter
+
+        // عند اختيار مرسل معين، نجلب الرسائل التابعة له
+        spinnerBank.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val selectedSender = sendersList[position]
+                if (position > 0) {
+                    val messages = getMessagesFromSender(selectedSender)
+                    val smsAdapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, messages)
+                    spinnerSampleSms.adapter = smsAdapter
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        // زر التجربة المبدئي
+        btnTestMatch.setOnClickListener {
+            val selectedMessage = spinnerSampleSms.selectedItem?.toString() ?: ""
+            if (selectedMessage.isNotEmpty()) {
+                tvTestResult.text = "تم اختيار الرسالة بنجاح:\n$selectedMessage"
+                tvTestResult.setTextColor(resources.getColor(android.R.color.holo_green_dark))
+            } else {
+                tvTestResult.text = "يرجى اختيار مرسل ورسالة أولاً!"
+                tvTestResult.setTextColor(resources.getColor(android.R.color.holo_red_dark))
+            }
+        }
 
         btnDelete.setOnClickListener {
             binding.cardsContainerLayout.removeView(cardView)
@@ -61,7 +93,6 @@ class MainActivity : AppCompatActivity() {
         binding.cardsContainerLayout.addView(cardView)
     }
 
-    // دالة استخراج أحدث المرسلين الفريدين من صندوق الرسائل
     private fun getSmsSenders(): List<String> {
         val sendersSet = mutableSetOf<String>()
         sendersSet.add("اختر اسم المرسل من القائمة...")
@@ -81,7 +112,7 @@ class MainActivity : AppCompatActivity() {
                     while (it.moveToNext()) {
                         if (addressIndex != -1) {
                             val address = it.getString(addressIndex)
-                            if (!address.isNull_or_empty()) {
+                            if (!address.isNullOrEmpty()) {
                                 sendersSet.add(address)
                             }
                         }
@@ -95,18 +126,46 @@ class MainActivity : AppCompatActivity() {
         return sendersSet.toList()
     }
 
-    private fun String?.isNull_or_empty(): Boolean = this == null || this.trim().isEmpty()
+    private fun getMessagesFromSender(sender: String): List<String> {
+        val messages = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                val cursor = contentResolver.query(
+                    Uri.parse("content://sms/inbox"),
+                    arrayOf("body"),
+                    "address = ?",
+                    arrayOf(sender),
+                    "date DESC LIMIT 15"
+                )
+
+                cursor?.use {
+                    val bodyIndex = it.getColumnIndex("body")
+                    while (it.moveToNext()) {
+                        if (bodyIndex != -1) {
+                            val body = it.getString(bodyIndex)
+                            if (!body.isNullOrEmpty()) {
+                                messages.add(body)
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        return if (messages.isEmpty()) listOf("لا توجد رسائل سابقة") else messages
+    }
 
     private fun loadSettings() {
         binding.etWebhookUrl.setText(prefs.webhookUrl)
         binding.etSecretToken.setText(prefs.secretToken)
-        binding.etWalletName.setText(prefs.walletName)
     }
 
     private fun saveSettings() {
         val url = binding.etWebhookUrl.text.toString().trim()
         val token = binding.etSecretToken.text.toString().trim()
-        val wallet = binding.etWalletName.text.toString().trim()
 
         if (url.isEmpty()) {
             Toast.makeText(this, "يرجى إدخال رابط الـ Webhook", Toast.LENGTH_SHORT).show()
@@ -115,7 +174,6 @@ class MainActivity : AppCompatActivity() {
 
         prefs.webhookUrl = url
         prefs.secretToken = token
-        prefs.walletName = wallet
 
         Toast.makeText(this, "تم حفظ الإعدادات بنجاح!", Toast.LENGTH_SHORT).show()
     }
