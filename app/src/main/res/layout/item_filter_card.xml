@@ -12,46 +12,80 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- زر الحذف للبطاقة -->
+        <!-- زر حذف البطاقة -->
         <Button
             android:id="@+id/btnDeleteCard"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_gravity="left"
             android:background="#E74C3C"
             android:text="X"
             android:textColor="#FFFFFF"
             android:textSize="12sp" />
 
-        <!-- القائمة المنسدلة لاختيار البنك -->
+        <!-- 1. القائمة المنسدلة لاختيار المرسل -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="اختر مرسل الرسالة (البنك):"
+            android:text="اختر مرسل الرسالة من الصندوق:"
             android:textColor="#333333"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
         <Spinner
             android:id="@+id/spinnerBank"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="10dp" />
 
-        <!-- المساحة الفارغة للخطوات القادمة -->
+        <!-- 2. الكلمة/الجملة المفتاحية للتحقق من الرسالة -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="كلمة مفتاحية بالرسالة (مثل: CliQ):"
+            android:textColor="#333333"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/etRequiredKeyword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="مثال: CliQ أو تحويل"
+            android:textSize="13sp"
+            android:layout_marginBottom="10dp" />
+
+        <!-- 3. شروط استخراج المبلغ -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:background="#FAFAFA"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <EditText
+                android:id="@+id/etAmountPrefix"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="(مساحة فارغة للكلمات المفتاحية لاحقاً)"
-                android:textColor="#AAAAAA"
+                android:layout_weight="1"
+                android:hint="الكلمة قبل المبلغ (مبلغ)"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/etAmountSuffix"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="الكلمة بعد المبلغ (JOD)"
                 android:textSize="12sp" />
         </LinearLayout>
+
+        <!-- 4. شروط استخراج الاسم -->
+        <EditText
+            android:id="@+id/etSenderPrefix"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="الكلمة قبل اسم المحول (من/من العميل)"
+            android:textSize="12sp"
+            android:layout_marginBottom="10dp" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>
