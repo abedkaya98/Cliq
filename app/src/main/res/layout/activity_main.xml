@@ -2,90 +2,80 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- بطاقة الإعدادات -->
+        <!-- إعدادات الـ Webhook القديمة -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
+            android:layout_marginBottom="16dp"
             android:background="@android:drawable/dialog_holo_light_frame"
-            android:layout_marginBottom="16dp">
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="12sp"
                 android:text="إعدادات الـ Webhook"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:layout_marginBottom="16dp" />
-
-            <!-- رابط الـ Webhook -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="رابط الـ Webhook URL:"
-                android:textColor="#333333"
-                android:textSize="14sp" />
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/etWebhookUrl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:hint="Webhook URL"
                 android:inputType="textUri"
-                android:hint="https://yourdomain.com/webhook.php"
-                android:layout_marginBottom="12dp" />
-
-            <!-- الـ Secret Token (مخفي برمز كلمة السر) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="الـ Secret Token:"
-                android:textColor="#333333"
                 android:textSize="14sp" />
 
             <EditText
                 android:id="@+id/etSecretToken"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:hint="Secret Token"
                 android:inputType="textPassword"
-                android:hint="CliqSecret2026"
-                android:layout_marginBottom="12dp" />
-
-            <!-- اسم المحفظة -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="اسم المحفظة (Wallet Name):"
-                android:textColor="#333333"
                 android:textSize="14sp" />
 
             <EditText
                 android:id="@+id/etWalletName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:hint="Wallet Name"
                 android:inputType="text"
-                android:hint="MainWallet"
-                android:layout_marginBottom="20dp" />
+                android:textSize="14sp" />
 
-            <!-- زر الحفظ -->
             <Button
                 android:id="@+id/btnSaveSettings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="حفظ الإعدادات" />
-
         </LinearLayout>
 
-        <!-- زر منح الإذن -->
+        <!-- زر إضافة بطاقة جديدة -->
+        <Button
+            android:id="@+id/btnAddCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#27AE60"
+            android:text="+ إضافة بطاقة بنك جديدة" />
+
+        <!-- الحاوية التي ستنزل فيها البطاقات ديناميكياً -->
+        <LinearLayout
+            android:id="@+id/cardsContainerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp"/>
+
         <Button
             android:id="@+id/btnTest"
             android:layout_width="match_parent"
