@@ -3,6 +3,11 @@ package com.example.cliqnotifier
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -22,18 +27,41 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         prefs = AppPreferences(this)
-
         loadSettings()
 
-        binding.btnSaveSettings.setOnClickListener {
-            saveSettings()
+        binding.btnSaveSettings.setOnClickListener { saveSettings() }
+        
+        // زر إضافة بطاقة جديدة
+        binding.btnAddCard.setOnClickListener {
+            addNewFilterCard()
         }
 
-        binding.btnTest.setOnClickListener {
-            checkAndRequestSmsPermission()
-        }
-
+        binding.btnTest.setOnClickListener { checkAndRequestSmsPermission() }
         checkAndRequestSmsPermission()
+
+        // إضافة بطاقة أولية افتراضية عند فتح التطبيق
+        addNewFilterCard()
+    }
+
+    private fun addNewFilterCard() {
+        val cardView = LayoutInflater.from(this).inflate(R.layout.item_filter_card, binding.cardsContainerLayout, false)
+        
+        val spinner = cardView.findViewById<Spinner>(R.id.spinnerBank)
+        val btnDelete = cardView.findViewById<Button>(R.id.btnDeleteCard)
+
+        // تعبئة القائمة المنسدلة بأسماء البنوك الشائعة
+        val banks = arrayOf("اختر البنك...", "Reflect", "Cairo Amman Bank", "Arab Bank", "Housing Bank", "Capital Bank")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, banks)
+        spinner.adapter = adapter
+
+        // زر حذف البطاقة
+        btnDelete.setOnClickListener {
+            binding.cardsContainerLayout.removeView(cardView)
+            Toast.makeText(this, "تم حذف البطاقة", Toast.LENGTH_SHORT).show()
+        }
+
+        // إضافة البطاقة للحاوية على الشاشة
+        binding.cardsContainerLayout.addView(cardView)
     }
 
     private fun loadSettings() {
