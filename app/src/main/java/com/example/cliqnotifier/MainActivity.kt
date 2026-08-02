@@ -2,11 +2,11 @@ package com.example.cliqnotifier
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -31,7 +31,6 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnSaveSettings.setOnClickListener { saveSettings() }
         
-        // زر إضافة بطاقة جديدة
         binding.btnAddCard.setOnClickListener {
             addNewFilterCard()
         }
@@ -39,7 +38,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnTest.setOnClickListener { checkAndRequestSmsPermission() }
         checkAndRequestSmsPermission()
 
-        // إضافة بطاقة أولية افتراضية عند فتح التطبيق
+        // إضافة بطاقة أولية
         addNewFilterCard()
     }
 
@@ -49,20 +48,54 @@ class MainActivity : AppCompatActivity() {
         val spinner = cardView.findViewById<Spinner>(R.id.spinnerBank)
         val btnDelete = cardView.findViewById<Button>(R.id.btnDeleteCard)
 
-        // تعبئة القائمة المنسدلة بأسماء البنوك الشائعة
-        val banks = arrayOf("اختر البنك...", "Reflect", "Cairo Amman Bank", "Arab Bank", "Housing Bank", "Capital Bank")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, banks)
+        // جلب أسماء المرسلين الحقيقيين من صندوق الرسائل بالهاتف
+        val sendersList = getSmsSenders()
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sendersList)
         spinner.adapter = adapter
 
-        // زر حذف البطاقة
         btnDelete.setOnClickListener {
             binding.cardsContainerLayout.removeView(cardView)
             Toast.makeText(this, "تم حذف البطاقة", Toast.LENGTH_SHORT).show()
         }
 
-        // إضافة البطاقة للحاوية على الشاشة
         binding.cardsContainerLayout.addView(cardView)
     }
+
+    // دالة استخراج أحدث المرسلين الفريدين من صندوق الرسائل
+    private fun getSmsSenders(): List<String> {
+        val sendersSet = mutableSetOf<String>()
+        sendersSet.add("اختر اسم المرسل من القائمة...")
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                val cursor = contentResolver.query(
+                    Uri.parse("content://sms/inbox"),
+                    arrayOf("address"),
+                    null,
+                    null,
+                    "date DESC LIMIT 200"
+                )
+
+                cursor?.use {
+                    val addressIndex = it.getColumnIndex("address")
+                    while (it.moveToNext()) {
+                        if (addressIndex != -1) {
+                            val address = it.getString(addressIndex)
+                            if (!address.isNull_or_empty()) {
+                                sendersSet.add(address)
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        return sendersSet.toList()
+    }
+
+    private fun String?.isNull_or_empty(): Boolean = this == null || this.trim().isEmpty()
 
     private fun loadSettings() {
         binding.etWebhookUrl.setText(prefs.webhookUrl)
