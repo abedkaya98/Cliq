@@ -1,4 +1,4 @@
-Name: Build Signed Android APK
+name: Build Signed Android APK
 
 on:
   workflow_dispatch:
@@ -22,7 +22,7 @@ jobs:
       with:
         gradle-version: '8.4'
 
-    # فك تشفير ملف التوقيع وحفظه داخل app/release.jks
+    # فك تشفير ملف التوقيع وحفظه
     - name: Decode Keystore
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.jks
@@ -35,6 +35,13 @@ jobs:
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
+    # رفع الـ APK الناتج
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-signed
+        path: app/build/outputs/apk/release/app-release.apk
+        
     # رفع الـ APK الناتج للمخرجات (Artifacts)
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
