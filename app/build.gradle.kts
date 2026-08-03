@@ -15,16 +15,13 @@ android {
         versionName = "1.0"
     }
 
-    // إعدادات التوقيع باستعمال البيئة من GitHub Actions
+    // إعدادات التوقيع المباشر من ملف release.jks داخل مجلد app
     signingConfigs {
         create("release") {
-            val keystoreFile = file("release.jks")
-            if (keystoreFile.exists()) {
-                storeFile = keystoreFile
-                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-                keyAlias = System.getenv("KEY_ALIAS") ?: ""
-                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
-            }
+            storeFile = file("release.jks")
+            storePassword = "كلمة_المرور_التي_كتبتها"
+            keyAlias = "cliq"
+            keyPassword = "كلمة_المرور_التي_كتبتها"
         }
     }
 
@@ -38,7 +35,7 @@ android {
             )
         }
         debug {
-            // يوقع نسخة الـ Debug بنفس التوقيع لتسهيل التحديثات المباشرة
+            // توقيع نسخة الـ Debug بنفس المفتاح
             signingConfig = signingConfigs.getByName("release")
         }
     }
