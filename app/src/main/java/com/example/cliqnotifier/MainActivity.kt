@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var prefs: AppPreferences
+    private lateinit var rulePrefs: RulePreferences
     private val SMS_PERMISSION_CODE = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +31,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         prefs = AppPreferences(this)
+        rulePrefs = RulePreferences(this)
+
         loadSettings()
 
         binding.btnSaveSettings.setOnClickListener { saveSettings() }
@@ -44,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         checkAndRequestSmsPermission()
     }
 
-    private fun addNewFilterCard() {
+    private fun addNewFilterCard(savedSender: String? = null) {
         val cardView = LayoutInflater.from(this).inflate(R.layout.item_filter_card, binding.cardsContainerLayout, false)
 
         val spinnerBank = cardView.findViewById<Spinner>(R.id.spinnerBank)
@@ -57,6 +60,14 @@ class MainActivity : AppCompatActivity() {
         val sendersList = getSmsSenders()
         val bankAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sendersList)
         spinnerBank.adapter = bankAdapter
+
+        // إذا كانت البطاقة معبأة سابقاً، نحدد المرسل المحفوظ
+        savedSender?.let { sender ->
+            val index = sendersList.indexOf(sender)
+            if (index >= 0) {
+                spinnerBank.setSelection(index)
+            }
+        }
 
         // عند اختيار مرسل معين، نجلب كافة الرسائل التابعة له
         spinnerBank.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -78,11 +89,9 @@ class MainActivity : AppCompatActivity() {
             if (selectedMessage.isNotEmpty() && selectedMessage != "لا توجد رسائل سابقة") {
                 
                 // تجربة الاستخراج باستخدام SmsParser
-                // بدل SmsParser.parse(selectedMessage)
                 val parsedResult = SmsParser.parseQuick(selectedMessage)
-               // val parsedResult = SmsParser.parse(selectedMessage)
 
-                if (parsedResult != null) {
+                if (parsedResult.isMatched) {
                     tvTestResult.text = "✅ تم التحليل بنجاح:\nالمبلغ: ${parsedResult.amount}\nالمرسل/الهدف: ${parsedResult.customerName}"
                     tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
                 } else {
@@ -170,8 +179,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadSettings() {
+        // 1. تحميل إعدادات Webhook
         binding.etWebhookUrl.setText(prefs.webhookUrl)
         binding.etSecretToken.setText(prefs.secretToken)
+
+        // 2. تحميل قواعد الفلترة المحفوظة وإنشاء بطاقات لها
+        val savedRules = rulePrefs.getRules()
+        binding.cardsContainerLayout.removeAllViews()
+        for (rule in savedRules) {
+            addNewFilterCard(rule.bankSenderId)
+        }
     }
 
     private fun saveSettings() {
@@ -183,10 +200,34 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // حفظ رابط السيرفر والتأكيد
         prefs.webhookUrl = url
         prefs.secretToken = token
 
-        Toast.makeText(this, "تم حفظ الإعدادات بنجاح!", Toast.LENGTH_SHORT).show()
+        // حفظ بطاقات وقواعد الفلترة المعروضة
+        val rulesList = mutableListOf<FilterRule>()
+        val container = binding.cardsContainerLayout
+        for (i in 0 until container.childCount) {
+            val cardView = container.getChildAt(i)
+            val spinnerBank = cardView.findViewById<Spinner>(R.id.spinnerBank)
+            val selectedSender = spinnerBank.selectedItem?.toString() ?: ""
+
+            if (selectedSender.isNotEmpty() && selectedSender != "اختر اسم المرسل من القائمة...") {
+                rulesList.add(
+                    FilterRule(
+                        bankSenderId = selectedSender,
+                        requiredKeyword = "",
+                        amountPrefix = "",
+                        amountSuffix = "",
+                        senderPrefix = ""
+                    )
+                )
+            }
+        }
+
+        rulePrefs.saveRules(rulesList)
+
+        Toast.makeText(this, "تم حفظ الإعدادات وقواعد الفلترة بنجاح!", Toast.LENGTH_SHORT).show()
     }
 
     private fun checkAndRequestSmsPermission() {
@@ -194,10 +235,8 @@ class MainActivity : AppCompatActivity() {
         val readSms = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
 
         if (receiveSms == PackageManager.PERMISSION_GRANTED && readSms == PackageManager.PERMISSION_GRANTED) {
-            // إخفاء الزر تماماً إذا كانت الصلاحيات ممنوحة
             binding.btnTest.visibility = View.GONE
         } else {
-            // إظهار الزر لطلب الصلاحية إذا لم تكن ممنوحة
             binding.btnTest.visibility = View.VISIBLE
             ActivityCompat.requestPermissions(
                 this,
