@@ -19,9 +19,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("release.jks")
-            storePassword = "كلمة_المرور_التي_كتبتها"
+            storePassword = "Aabb213"
             keyAlias = "cliq"
-            keyPassword = "كلمة_المرور_التي_كتبتها"
+            keyPassword = "Aabb213"
         }
     }
 
