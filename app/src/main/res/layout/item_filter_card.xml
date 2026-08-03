@@ -56,14 +56,33 @@
             android:layout_height="48dp"
             android:layout_marginBottom="12dp" />
 
-        <!-- 3. زر اختبار وتحليل الرسالة -->
-        <Button
-            android:id="@+id/btnTestMatch"
+        <!-- 3. أزرار الفحص والإرسال -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="#3498DB"
-            android:text="اختبار وتحليل الرسالة المختارة"
-            android:textSize="13sp" />
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <Button
+                android:id="@+id/btnTestMatch"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:backgroundTint="#3498DB"
+                android:text="تحليل محلي"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnSendTestWebhook"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:backgroundTint="#27AE60"
+                android:text="إرسال تجريبي للسيرفر"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <!-- مكان عرض نتيجة الاختيار -->
         <TextView
@@ -72,7 +91,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:padding="8dp"
-            android:text="اختر رسالة واضغط على زر التحليل للاختبار..."
+            android:text="اختر رسالة واضغط على الاختبار..."
             android:textColor="#666666"
             android:textSize="12sp" />
 
