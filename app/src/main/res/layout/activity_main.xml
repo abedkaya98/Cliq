@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- إعدادات الـ Webhook القديمة -->
+        <!-- إعدادات الـ Webhook -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,20 +43,12 @@
                 android:inputType="textPassword"
                 android:textSize="14sp" />
 
-            <EditText
-                android:id="@+id/etWalletName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Wallet Name"
-                android:inputType="text"
-                android:textSize="14sp" />
-
             <Button
                 android:id="@+id/btnSaveSettings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="حفظ الإعدادات" />
+                android:text="حفظ الإعدادات والقواعد" />
         </LinearLayout>
 
         <!-- زر إضافة بطاقة جديدة -->
