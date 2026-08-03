@@ -2,62 +2,59 @@ package com.example.cliqnotifier
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-class WebhookManager(private val context: Context) {
+object WebhookManager {
 
-    private val prefs = AppPreferences(context)
-
-    suspend fun sendPaymentNotification(
-        amount: Double,
+    fun sendPayload(
+        context: Context,
+        webhookUrl: String,
+        secretToken: String,
+        bankSender: String,
         customerName: String,
-        rawMessage: String,
-        timestamp: Long = System.currentTimeMillis()
-    ): Boolean = withContext(Dispatchers.IO) {
-        val webhookUrl = prefs.webhookUrl
-        val secretToken = prefs.secretToken
-        val walletName = prefs.walletName
+        amount: Double,
+        fullText: String
+    ) {
+        // تشغيل الإرسال في الخلفية (Background Thread) لعدم تعطيل التطبيق
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val url = URL(webhookUrl)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json; utf-8")
+                connection.setRequestProperty("Accept", "application/json")
+                connection.setRequestProperty("X-Secret-Token", secretToken)
+                connection.doOutput = true
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
 
-        if (webhookUrl.isEmpty()) {
-            Log.e("CliQ_Webhook", "رابط الـ Webhook غير مفعّل أو فارغ!")
-            return@withContext false
-        }
+                // بناء الـ JSON المطلوب إرساله لسيرفرك
+                val jsonPayload = JSONObject().apply {
+                    put("bank_sender", bankSender)
+                    put("amount", amount)
+                    put("customer_name", customerName)
+                    put("full_text", fullText)
+                    put("secret_token", secretToken)
+                    put("timestamp", System.currentTimeMillis())
+                }
 
-        try {
-            val url = URL(webhookUrl)
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json; utf-8")
-            connection.setRequestProperty("Accept", "application/json")
-            connection.setRequestProperty("X-Secret-Token", secretToken)
-            connection.doOutput = true
-            connection.connectTimeout = 10000
-            connection.readTimeout = 10000
+                connection.outputStream.use { os ->
+                    val input = jsonPayload.toString().toByteArray(Charsets.UTF_8)
+                    os.write(input, 0, input.size)
+                }
 
-            val jsonInput = JSONObject().apply {
-                put("wallet_name", walletName)
-                put("amount", amount)
-                put("customer_name", customerName)
-                put("raw_message", rawMessage)
-                put("timestamp", timestamp)
+                val responseCode = connection.responseCode
+                Log.d("CliQ_Webhook", "تم إرسال الـ Webhook بنجاح. كود الاستجابة: $responseCode")
+
+            } catch (e: Exception) {
+                Log.e("CliQ_Webhook", "خطأ أثناء إرسال الـ Webhook: ${e.message}", e)
             }
-
-            connection.outputStream.use { os ->
-                val input = jsonInput.toString().toByteArray(Charsets.UTF_8)
-                os.write(input, 0, input.size)
-            }
-
-            val responseCode = connection.responseCode
-            Log.d("CliQ_Webhook", "Webhook Response Code: $responseCode")
-
-            responseCode == 200
-        } catch (e: Exception) {
-            Log.e("CliQ_Webhook", "Exception during sending webhook: ${e.message}", e)
-            false
         }
     }
 }
