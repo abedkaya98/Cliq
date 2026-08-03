@@ -78,7 +78,9 @@ class MainActivity : AppCompatActivity() {
             if (selectedMessage.isNotEmpty() && selectedMessage != "لا توجد رسائل سابقة") {
                 
                 // تجربة الاستخراج باستخدام SmsParser
-                val parsedResult = SmsParser.parse(selectedMessage)
+                // بدل SmsParser.parse(selectedMessage)
+                val parsedResult = SmsParser.parseQuick(selectedMessage)
+               // val parsedResult = SmsParser.parse(selectedMessage)
 
                 if (parsedResult != null) {
                     tvTestResult.text = "✅ تم التحليل بنجاح:\nالمبلغ: ${parsedResult.amount}\nالمرسل/الهدف: ${parsedResult.senderName}"
