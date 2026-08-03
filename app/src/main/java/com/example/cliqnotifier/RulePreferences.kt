@@ -27,7 +27,8 @@ class RulePreferences(context: Context) {
 
     fun getRules(): MutableList<FilterRule> {
         val rulesList = mutableListOf<FilterRule>()
-        val jsonString = prefs.getString("rules_list", null) ?: return defaultRules()
+        // إن لم تكن هناك قواعد مخزنة، نعيد قائمة فارغة تماماً دون إنشاء أي بطاقة افتراضية
+        val jsonString = prefs.getString("rules_list", null) ?: return mutableListOf()
 
         try {
             val jsonArray = JSONArray(jsonString)
@@ -48,19 +49,6 @@ class RulePreferences(context: Context) {
             e.printStackTrace()
         }
 
-        return if (rulesList.isEmpty()) defaultRules() else rulesList
-    }
-
-    private fun defaultRules(): MutableList<FilterRule> {
-        // قاعدة افتراضية أولية لبنك القاهرة / ريفلكت
-        return mutableListOf(
-            FilterRule(
-                bankSenderId = "Reflect",
-                requiredKeyword = "CliQ",
-                amountPrefix = "مبلغ",
-                amountSuffix = "JOD",
-                senderPrefix = "من"
-            )
-        )
+        return rulesList
     }
 }
