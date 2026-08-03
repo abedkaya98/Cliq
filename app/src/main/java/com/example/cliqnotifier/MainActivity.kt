@@ -39,9 +39,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnTest.setOnClickListener { checkAndRequestSmsPermission() }
+        
+        // فحص الصلاحيات عند الفتح (وإخفاء الزر إذا كانت ممنوحة)
         checkAndRequestSmsPermission()
-
-        // تم إلغاء إضافة البطاقة التلقائية هنا لتصبح الشاشة فارغة عند أول تشغيل
     }
 
     private fun addNewFilterCard() {
@@ -72,12 +72,22 @@ class MainActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        // زر التجربة المبدئي
+        // زر التجربة المباشر واختبار الاستخراج
         btnTestMatch.setOnClickListener {
             val selectedMessage = spinnerSampleSms.selectedItem?.toString() ?: ""
             if (selectedMessage.isNotEmpty() && selectedMessage != "لا توجد رسائل سابقة") {
-                tvTestResult.text = "تم اختيار الرسالة بنجاح:\n$selectedMessage"
-                tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+                
+                // تجربة الاستخراج باستخدام SmsParser
+                val parsedResult = SmsParser.parse(selectedMessage)
+
+                if (parsedResult != null) {
+                    tvTestResult.text = "✅ تم التحليل بنجاح:\nالمبلغ: ${parsedResult.amount}\nالمرسل/الهدف: ${parsedResult.senderName}"
+                    tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+                } else {
+                    tvTestResult.text = "⚠️ الرسالة لا تطابق صيغة التحليل الحالية!\nالنص: $selectedMessage"
+                    tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_orange_dark))
+                }
+
             } else {
                 tvTestResult.text = "يرجى اختيار مرسل ورسالة أولاً!"
                 tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
@@ -98,7 +108,6 @@ class MainActivity : AppCompatActivity() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
             try {
-                // إزالة LIMIT 200 لجلب جميع المرسلين من صندوق الرسائل
                 val cursor = contentResolver.query(
                     Uri.parse("content://sms/inbox"),
                     arrayOf("address"),
@@ -131,7 +140,6 @@ class MainActivity : AppCompatActivity() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
             try {
-                // إزالة LIMIT 15 لجلب كافة رسائل المرسل المحدد بدون حد أقصى
                 val cursor = contentResolver.query(
                     Uri.parse("content://sms/inbox"),
                     arrayOf("body"),
@@ -183,12 +191,29 @@ class MainActivity : AppCompatActivity() {
         val receiveSms = ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS)
         val readSms = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
 
-        if (receiveSms != PackageManager.PERMISSION_GRANTED || readSms != PackageManager.PERMISSION_GRANTED) {
+        if (receiveSms == PackageManager.PERMISSION_GRANTED && readSms == PackageManager.PERMISSION_GRANTED) {
+            // إخفاء الزر تماماً إذا كانت الصلاحيات ممنوحة
+            binding.btnTest.visibility = View.GONE
+        } else {
+            // إظهار الزر لطلب الصلاحية إذا لم تكن ممنوحة
+            binding.btnTest.visibility = View.VISIBLE
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS),
                 SMS_PERMISSION_CODE
             )
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == SMS_PERMISSION_CODE) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                binding.btnTest.visibility = View.GONE
+                Toast.makeText(this, "تم منح الصلاحيات بنجاح!", Toast.LENGTH_SHORT).show()
+            } else {
+                binding.btnTest.visibility = View.VISIBLE
+            }
         }
     }
 }
