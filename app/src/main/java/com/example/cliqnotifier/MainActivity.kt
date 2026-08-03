@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity() {
                // val parsedResult = SmsParser.parse(selectedMessage)
 
                 if (parsedResult != null) {
-                    tvTestResult.text = "✅ تم التحليل بنجاح:\nالمبلغ: ${parsedResult.amount}\nالمرسل/الهدف: ${parsedResult.senderName}"
+                    tvTestResult.text = "✅ تم التحليل بنجاح:\nالمبلغ: ${parsedResult.amount}\nالمرسل/الهدف: ${parsedResult.customerName}"
                     tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
                 } else {
                     tvTestResult.text = "⚠️ الرسالة لا تطابق صيغة التحليل الحالية!\nالنص: $selectedMessage"
