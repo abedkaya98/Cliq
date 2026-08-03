@@ -15,7 +15,7 @@ class SmsParser(private val rules: List<FilterRule>) {
         for (rule in rules) {
             // 1. التحقق من اسم المرسل والكلمة المفتاحية
             val isSenderMatch = smsSender.contains(rule.bankSenderId, ignoreCase = true) || rule.bankSenderId == "*"
-            val isKeywordMatch = smsBody.contains(rule.requiredKeyword, ignoreCase = true)
+            val isKeywordMatch = rule.requiredKeyword.isEmpty() || smsBody.contains(rule.requiredKeyword, ignoreCase = true)
 
             if (isSenderMatch && isKeywordMatch) {
                 Log.d("CliQ_Parser", "طابقت الرسالة قاعدة البنك: ${rule.bankSenderId}")
@@ -38,28 +38,64 @@ class SmsParser(private val rules: List<FilterRule>) {
         return ParsedCliqData(isMatched = false)
     }
 
+    companion object {
+        // دالة تجريبية سريعة تستخدم في زر التجربة (Test Match) بالشاشة
+        fun parseQuick(smsBody: String): ParsedCliqData {
+            val amount = extractAnyNumber(smsBody)
+            val name = extractAnyName(smsBody)
+            val matched = amount > 0.0
+
+            return ParsedCliqData(
+                isMatched = matched,
+                amount = amount,
+                customerName = name,
+                matchedBank = "اختبار سريع"
+            )
+        }
+
+        private fun extractAnyNumber(text: String): Double {
+            // يبحث عن الأرقام التي تحتوي على فواصل عشرية أو أرقام صحيحة المتبوعة بـ JOD / د.أ / دينار
+            val regex = Regex("([0-9]+(?:\\.[0-9]+)?)\\s*(?:JOD|د\\.أ|دينار|JOD)?", RegexOption.IGNORE_CASE)
+            val match = regex.find(text)
+            return match?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+        }
+
+        private fun extractAnyName(text: String): String {
+            // محاولة استخراج الاسم العربي بعد كلمات مثل (من / From)
+            val regex = Regex("(?:من|from)\\s+([\\p{L}\\s]+)", RegexOption.IGNORE_CASE)
+            val match = regex.find(text)
+            return match?.groupValues?.get(1)?.trim() ?: "غير محدد"
+        }
+    }
+
     private fun extractAmount(text: String, prefix: String, suffix: String): Double {
         return try {
-            val regexString = "$prefix\\s*([0-9]+(?:\\.[0-9]+)?)\\s*$suffix"
-            val regex = Regex(regexString, RegexOption.IGNORE_CASE)
-            val match = regex.find(text)
-            match?.groupValues?.get(1)?.toDoubleOrNull() ?: extractAnyNumber(text)
+            if (prefix.isNotEmpty() || suffix.isNotEmpty()) {
+                val regexString = "${Regex.escape(prefix)}\\s*([0-9]+(?:\\.[0-9]+)?)\\s*${Regex.escape(suffix)}"
+                val regex = Regex(regexString, RegexOption.IGNORE_CASE)
+                val match = regex.find(text)
+                match?.groupValues?.get(1)?.toDoubleOrNull() ?: extractAnyNumber(text)
+            } else {
+                extractAnyNumber(text)
+            }
         } catch (e: Exception) {
             extractAnyNumber(text)
         }
     }
 
     private fun extractAnyNumber(text: String): Double {
-        val regex = Regex("([0-9]+(?:\\.[0-9]+)?)")
-        val match = regex.find(text)
-        return match?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+        return Companion.extractAnyNumber(text)
     }
 
     private fun extractCustomerName(text: String, prefix: String): String {
         return try {
-            val regex = Regex("$prefix\\s+([\\p{L}\\s]+)", RegexOption.IGNORE_CASE)
-            val match = regex.find(text)
-            match?.groupValues?.get(1)?.trim() ?: "مجهول"
+            if (prefix.isNotEmpty()) {
+                val regex = Regex("${Regex.escape(prefix)}\\s+([\\p{L}\\s]+)", RegexOption.IGNORE_CASE)
+                val match = regex.find(text)
+                match?.groupValues?.get(1)?.trim() ?: "مجهول"
+            } else {
+                Companion.extractAnyName(text)
+            }
         } catch (e: Exception) {
             "مجهول"
         }
