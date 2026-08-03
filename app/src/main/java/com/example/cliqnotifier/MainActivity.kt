@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnRefreshLogs.setOnClickListener { fetchDatabaseLogs() }
 
         checkAndRequestSmsPermission()
-        fetchDatabaseLogs()
+        fetchDatabaseLogs() // جلب السجلات عند الفتح
     }
 
     private fun addNewFilterCard(savedSender: String? = null, savedMessage: String? = null) {
@@ -54,7 +54,6 @@ class MainActivity : AppCompatActivity() {
         val spinnerBank = cardView.findViewById<Spinner>(R.id.spinnerBank)
         val spinnerSampleSms = cardView.findViewById<Spinner>(R.id.spinnerSampleSms)
         val btnTestMatch = cardView.findViewById<Button>(R.id.btnTestMatch)
-        val btnSendTestWebhook = cardView.findViewById<Button>(R.id.btnSendTestWebhook)
         val tvTestResult = cardView.findViewById<TextView>(R.id.tvTestResult)
         val btnDelete = cardView.findViewById<Button>(R.id.btnDeleteCard)
 
@@ -62,7 +61,6 @@ class MainActivity : AppCompatActivity() {
         val bankAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sendersList)
         spinnerBank.adapter = bankAdapter
 
-        // اختيار البنك المحفوظ
         savedSender?.let { sender ->
             val index = sendersList.indexOf(sender)
             if (index >= 0) spinnerBank.setSelection(index)
@@ -76,12 +74,10 @@ class MainActivity : AppCompatActivity() {
                     val smsAdapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, messages)
                     spinnerSampleSms.adapter = smsAdapter
 
-                    // تحديد الرسالة المحفوظة مسبقاً
+                    // اختيار الرسالة المحفوظة مسبقاً إن وجدت
                     savedMessage?.let { msg ->
                         val msgIndex = messages.indexOf(msg)
-                        if (msgIndex >= 0) {
-                            spinnerSampleSms.setSelection(msgIndex)
-                        }
+                        if (msgIndex >= 0) spinnerSampleSms.setSelection(msgIndex)
                     }
                 }
             }
@@ -89,7 +85,6 @@ class MainActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        // اختبار التحليل المحلي
         btnTestMatch.setOnClickListener {
             val selectedMessage = spinnerSampleSms.selectedItem?.toString() ?: ""
             if (selectedMessage.isNotEmpty() && selectedMessage != "لا توجد رسائل سابقة") {
@@ -108,48 +103,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // إرسال تجريبي للسيرفر مباشرة
-        btnSendTestWebhook.setOnClickListener {
-            val selectedSender = spinnerBank.selectedItem?.toString() ?: ""
-            val selectedMessage = spinnerSampleSms.selectedItem?.toString() ?: ""
-
-            if (selectedMessage.isEmpty() || selectedMessage == "لا توجد رسائل سابقة") {
-                Toast.makeText(this, "اختر رسالة أولاً لإرسالها!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val parsedResult = SmsParser.parseQuick(selectedMessage)
-            val walletName = if (selectedSender.isNotEmpty() && selectedSender != "اختر اسم المرسل من القائمة...") selectedSender else "TestWallet"
-
-            tvTestResult.text = "⏳ جاري الإرسال للسيرفر..."
-            tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_blue_dark))
-
-            thread {
-                val success = WebhookSender.send(
-                    context = this,
-                    walletName = walletName,
-                    amount = parsedResult.amount,
-                    customerName = parsedResult.customerName,
-                    rawMessage = selectedMessage,
-                    timestamp = System.currentTimeMillis()
-                )
-
-                runOnUiThread {
-                    if (success) {
-                        tvTestResult.text = "🚀 تم الإرسال للسيرفر بنجاح ورُفعت للقاعدة!"
-                        tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
-                        fetchDatabaseLogs() // تحديث السجلات فوراً
-                    } else {
-                        tvTestResult.text = "❌ فشل الإرسال للسيرفر! افحص رابط الـ Webhook والتوكن."
-                        tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
-                    }
-                }
-            }
-        }
-
         btnDelete.setOnClickListener {
             binding.cardsContainerLayout.removeView(cardView)
-            saveSettings() // حفظ التغييرات فور الحذف
             Toast.makeText(this, "تم حذف البطاقة", Toast.LENGTH_SHORT).show()
         }
 
@@ -260,7 +215,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         rulePrefs.saveRules(rulesList)
-        Toast.makeText(this, "تم حفظ الإعدادات والرسائل بنجاح!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "تم حفظ الإعدادات وقواعد الفلترة بنجاح!", Toast.LENGTH_SHORT).show()
     }
 
     private fun fetchDatabaseLogs() {
@@ -276,6 +231,7 @@ class MainActivity : AppCompatActivity() {
 
         thread {
             try {
+                // استبدال webhook.php بـ get_logs.php
                 val logsUrl = if (baseUrl.endsWith("webhook.php")) {
                     baseUrl.replace("webhook.php", "get_logs.php")
                 } else {
@@ -343,7 +299,7 @@ class MainActivity : AppCompatActivity() {
             if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 binding.btnTest.visibility = View.GONE
                 Toast.makeText(this, "تم منح الصلاحيات بنجاح!", Toast.LENGTH_SHORT).show()
-                loadSettings()
+                loadSettings() // إعادة تحميل القوائم بعد قبول الصلاحيات
             } else {
                 binding.btnTest.visibility = View.VISIBLE
             }
