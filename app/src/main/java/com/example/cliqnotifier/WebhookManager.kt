@@ -5,7 +5,6 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -21,7 +20,6 @@ object WebhookManager {
         amount: Double,
         fullText: String
     ) {
-        // تشغيل الإرسال في الخلفية (Background Thread) لعدم تعطيل التطبيق
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val url = URL(webhookUrl)
@@ -34,13 +32,12 @@ object WebhookManager {
                 connection.connectTimeout = 10000
                 connection.readTimeout = 10000
 
-                // بناء الـ JSON المطلوب إرساله لسيرفرك
+                // بناء البيانات بنفس الأسماء التي يتوقعها سيرفر PHP
                 val jsonPayload = JSONObject().apply {
-                    put("bank_sender", bankSender)
+                    put("wallet_name", bankSender)
                     put("amount", amount)
                     put("customer_name", customerName)
-                    put("full_text", fullText)
-                    put("secret_token", secretToken)
+                    put("raw_message", fullText)
                     put("timestamp", System.currentTimeMillis())
                 }
 
