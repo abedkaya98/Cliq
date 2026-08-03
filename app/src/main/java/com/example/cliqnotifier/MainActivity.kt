@@ -41,8 +41,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnTest.setOnClickListener { checkAndRequestSmsPermission() }
         checkAndRequestSmsPermission()
 
-        // إضافة بطاقة أولية
-        addNewFilterCard()
+        // تم إلغاء إضافة البطاقة التلقائية هنا لتصبح الشاشة فارغة عند أول تشغيل
     }
 
     private fun addNewFilterCard() {
@@ -59,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         val bankAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sendersList)
         spinnerBank.adapter = bankAdapter
 
-        // عند اختيار مرسل معين، نجلب الرسائل التابعة له
+        // عند اختيار مرسل معين، نجلب كافة الرسائل التابعة له
         spinnerBank.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedSender = sendersList[position]
@@ -76,12 +75,12 @@ class MainActivity : AppCompatActivity() {
         // زر التجربة المبدئي
         btnTestMatch.setOnClickListener {
             val selectedMessage = spinnerSampleSms.selectedItem?.toString() ?: ""
-            if (selectedMessage.isNotEmpty()) {
+            if (selectedMessage.isNotEmpty() && selectedMessage != "لا توجد رسائل سابقة") {
                 tvTestResult.text = "تم اختيار الرسالة بنجاح:\n$selectedMessage"
-                tvTestResult.setTextColor(resources.getColor(android.R.color.holo_green_dark))
+                tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
             } else {
                 tvTestResult.text = "يرجى اختيار مرسل ورسالة أولاً!"
-                tvTestResult.setTextColor(resources.getColor(android.R.color.holo_red_dark))
+                tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
             }
         }
 
@@ -99,12 +98,13 @@ class MainActivity : AppCompatActivity() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
             try {
+                // إزالة LIMIT 200 لجلب جميع المرسلين من صندوق الرسائل
                 val cursor = contentResolver.query(
                     Uri.parse("content://sms/inbox"),
                     arrayOf("address"),
                     null,
                     null,
-                    "date DESC LIMIT 200"
+                    "date DESC"
                 )
 
                 cursor?.use {
@@ -131,12 +131,13 @@ class MainActivity : AppCompatActivity() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
             try {
+                // إزالة LIMIT 15 لجلب كافة رسائل المرسل المحدد بدون حد أقصى
                 val cursor = contentResolver.query(
                     Uri.parse("content://sms/inbox"),
                     arrayOf("body"),
                     "address = ?",
                     arrayOf(sender),
-                    "date DESC LIMIT 15"
+                    "date DESC"
                 )
 
                 cursor?.use {
