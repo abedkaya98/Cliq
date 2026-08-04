@@ -15,6 +15,7 @@ class RulePreferences(context: Context) {
             val obj = JSONObject().apply {
                 put("id", rule.id)
                 put("bankSenderId", rule.bankSenderId)
+                put("sampleMessage", rule.sampleMessage)
                 put("requiredKeyword", rule.requiredKeyword)
                 put("amountPrefix", rule.amountPrefix)
                 put("amountSuffix", rule.amountSuffix)
@@ -27,7 +28,6 @@ class RulePreferences(context: Context) {
 
     fun getRules(): MutableList<FilterRule> {
         val rulesList = mutableListOf<FilterRule>()
-        // إن لم تكن هناك قواعد مخزنة، نعيد قائمة فارغة تماماً دون إنشاء أي بطاقة افتراضية
         val jsonString = prefs.getString("rules_list", null) ?: return mutableListOf()
 
         try {
@@ -38,6 +38,7 @@ class RulePreferences(context: Context) {
                     FilterRule(
                         id = obj.optString("id"),
                         bankSenderId = obj.optString("bankSenderId"),
+                        sampleMessage = obj.optString("sampleMessage"),
                         requiredKeyword = obj.optString("requiredKeyword"),
                         amountPrefix = obj.optString("amountPrefix"),
                         amountSuffix = obj.optString("amountSuffix"),
