@@ -4,8 +4,10 @@
     <!-- أذونات قراءة واستقبال الرسائل النصية -->
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android.permission.INTERNET />
-    <uses-permission android.permission.ACCESS_NETWORK_STATE />
+    
+    <!-- أذونات الإنترنت والشبكة الصحيحة -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
