@@ -104,38 +104,41 @@ class MainActivity : AppCompatActivity() {
         }
 
         // إرسال تجريبي باستخدام WebhookManager مباشرة
-        btnSendTestWebhook.setOnClickListener {
-            val selectedSender = spinnerBank.selectedItem?.toString() ?: ""
-            val selectedMessage = spinnerSampleSms.selectedItem?.toString() ?: ""
+btnSendTestWebhook.setOnClickListener {
+    val selectedSender = spinnerBank.selectedItem?.toString() ?: ""
+    val selectedMessage = spinnerSampleSms.selectedItem?.toString() ?: ""
 
-            if (selectedMessage.isEmpty() || selectedMessage == "لا توجد رسائل سابقة") {
-                Toast.makeText(this, "اختر رسالة أولاً لإرسالها!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+    if (selectedMessage.isEmpty() || selectedMessage == "لا توجد رسائل سابقة") {
+        Toast.makeText(this, "اختر رسالة أولاً لإرسالها!", Toast.LENGTH_SHORT).show()
+        return@setOnClickListener
+    }
 
-            val parsedResult = SmsParser.parseQuick(selectedMessage)
-            val walletName = if (selectedSender.isNotEmpty() && selectedSender != "اختر اسم المرسل من القائمة...") selectedSender else "TestWallet"
+    val parsedResult = SmsParser.parseQuick(selectedMessage)
+    val walletName = if (selectedSender.isNotEmpty() && selectedSender != "اختر اسم المرسل من القائمة...") selectedSender else "TestWallet"
 
-            tvTestResult.text = "⏳ جاري الإرسال للسيرفر..."
-            tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_blue_dark))
+    tvTestResult.text = "⏳ جاري الإرسال للسيرفر..."
+    tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_blue_dark))
 
-            WebhookManager.sendPayload(
-                context = this,
-                webhookUrl = prefs.webhookUrl.trim(),
-                secretToken = prefs.secretToken.trim(),
-                bankSender = walletName,
-                customerName = parsedResult.customerName,
-                amount = parsedResult.amount,
-                fullText = selectedMessage
-            )
-
-            // انتظار ثانية وتحديث سجلات قاعدة البيانات
-            binding.root.postDelayed({
-                tvTestResult.text = "🚀 تم إرسال الطلب! تفحص جدول الحركات."
-                tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
-                fetchDatabaseLogs()
-            }, 1200)
+    WebhookManager.sendPayload(
+        context = this,
+        webhookUrl = prefs.webhookUrl.trim(),
+        secretToken = prefs.secretToken.trim(),
+        bankSender = walletName,
+        customerName = parsedResult.customerName,
+        amount = parsedResult.amount,
+        fullText = selectedMessage
+    ) { isSuccess, message ->
+        if (isSuccess) {
+            tvTestResult.text = "✅ $message"
+            tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+            fetchDatabaseLogs() // تحديث الجدول السفلي فوراً
+        } else {
+            tvTestResult.text = "❌ $message"
+            tvTestResult.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
         }
+    }
+}
+
 
         btnDelete.setOnClickListener {
             binding.cardsContainerLayout.removeView(cardView)
